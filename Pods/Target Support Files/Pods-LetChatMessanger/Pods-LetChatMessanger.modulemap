@@ -1,0 +1,6 @@
+framework module Pods_LetChatMessanger {
+  umbrella header "Pods-LetChatMessanger-umbrella.h"
+
+  export *
+  module * { export * }
+}
