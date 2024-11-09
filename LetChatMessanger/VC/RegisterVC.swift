@@ -43,21 +43,21 @@ class RegisterVC: UIViewController {
               let email = registerView.emailTextField.text, !email.isEmpty,
               let pass = registerView.passwordTextField.text, !pass.isEmpty,
               let confirmPass = registerView.confirmPasswordTextField.text, !confirmPass.isEmpty else {
-            showAlert(title: "输入错误", message: "请填写所有字段")
+            showAlert(title: "Input Error", message: "Please fill in all fields")
             SVProgressHUD.dismiss()
             return
         }
         
         // 验证密码匹配
         guard pass == confirmPass else {
-            showAlert(title: "密码错误", message: "两次输入的密码不匹配")
+            showAlert(title: "Wrong Password", message: "The two passwords you entered do not match")
             SVProgressHUD.dismiss()
             return
         }
         
         // 验证密码长度
         guard pass.count >= 6 else {
-            showAlert(title: "密码错误", message: "密码长度至少需要6个字符")
+            showAlert(title: "Password Error", message: "The password must be at least 6 characters long")
             SVProgressHUD.dismiss()
             return
         }
@@ -69,7 +69,7 @@ class RegisterVC: UIViewController {
         Auth.auth().createUser(withEmail: email, password: pass) { [weak self] (result, error) in
             SVProgressHUD.dismiss()
             if let error = error {
-                self?.showAlert(title: "无法创建用户", message: error.localizedDescription)
+                self?.showAlert(title: "Failed to create user", message: error.localizedDescription)
             } else if let uid = result?.user.uid {
                 // 保存用户信息到数据库
                 let userRef = Database.database().reference().child("users").child(uid)
@@ -80,7 +80,7 @@ class RegisterVC: UIViewController {
                 ]
                 userRef.setValue(userData) { (error, _) in
                     if let error = error {
-                        print("保存用户数据失败：\(error.localizedDescription)")
+                        print("Failed to save user data: \(error.localizedDescription)")
                     } else {
                         // 跳转到用户列表页面
                         let userListVC = UserListVC()
@@ -93,7 +93,7 @@ class RegisterVC: UIViewController {
     
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
 }

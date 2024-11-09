@@ -5,8 +5,10 @@ import SVProgressHUD
 
 class ChatPageVC: UIViewController {
     
+    // MARK: - Properties
     var mesArray: [MessageStruct] = []
     var otherUserEmail: String?
+    var otherUserName: String?
     
     private let chatPageView: ChatPageView = {
         let view = ChatPageView()
@@ -14,15 +16,24 @@ class ChatPageVC: UIViewController {
         return view
     }()
     
+    // MARK: - Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
+        fetchOtherUserName()
         navigationBarSetUp()
-        retriveMessageFromDataBase()
         setupTableView()
+        retriveMessageFromDataBase()
         setupMessageSending()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // 在视图布局完成后滚动到底部
+        scrollToBottom(animated: false)
+    }
+    
+    // MARK: - Setup Methods
     private func setupView() {
         view.backgroundColor = .white
         view.addSubview(chatPageView)
@@ -39,25 +50,50 @@ class ChatPageVC: UIViewController {
         chatPageView.chatMessagesTableView.delegate = self
         chatPageView.chatMessagesTableView.dataSource = self
         chatPageView.chatMessagesTableView.register(MessageCell.self, forCellReuseIdentifier: MessageCell.identifier)
+        chatPageView.chatMessagesTableView.rowHeight = UITableView.automaticDimension
+        chatPageView.chatMessagesTableView.estimatedRowHeight = 60
     }
     
     private func setupMessageSending() {
-        chatPageView.messageSendButton.addTarget(self, action: #selector(tappedOnMessageSendButton), for: .touchUpInside)
+        chatPageView.messageSendButton.addTarget(
+            self,
+            action: #selector(tappedOnMessageSendButton),
+            for: .touchUpInside
+        )
     }
     
+    private func fetchOtherUserName() {
+        guard let otherEmail = otherUserEmail else { return }
+        
+        let usersRef = Database.database().reference().child("users")
+        usersRef.queryOrdered(byChild: "email").queryEqual(toValue: otherEmail).observeSingleEvent(of: .value) { [weak self] snapshot in
+            for child in snapshot.children {
+                if let userSnapshot = child as? DataSnapshot,
+                   let userData = userSnapshot.value as? [String: Any],
+                   let name = userData["name"] as? String {
+                    self?.otherUserName = name
+                    // 更新导航栏标题
+                    self?.navigationItem.title = name
+                    break
+                }
+            }
+        }
+    }
+    
+    // MARK: - Navigation Setup
     func navigationBarSetUp() {
-        navigationItem.title = otherUserEmail
-        // 不再隐藏返回按钮
-        let logOutButton = UIBarButtonItem(title: "退出", style: .plain, target: self, action: #selector(logoutButtonTapped))
+        navigationItem.title = otherUserName ?? otherUserEmail
+        let logOutButton = UIBarButtonItem(title: "Log Out", style: .plain, target: self, action: #selector(logoutButtonTapped))
         navigationItem.rightBarButtonItem = logOutButton
     }
     
+    // MARK: - Action Methods
     @objc func logoutButtonTapped() {
         do {
             try Auth.auth().signOut()
             navigationController?.popToRootViewController(animated: true)
         } catch {
-            print("退出登录错误: \(error)")
+            print("Failed to log out: \(error)")
         }
     }
     
@@ -105,6 +141,8 @@ class ChatPageVC: UIViewController {
                     Database.database().reference().updateChildValues(multiPathUpdates) { [weak self] error, _ in
                         if error == nil {
                             self?.chatPageView.messageTextField.text = ""
+                            // 发送成功后滚动到底部
+                            self?.scrollToBottom()
                         }
                         self?.chatPageView.messageTextField.isEnabled = true
                         self?.chatPageView.messageSendButton.isEnabled = true
@@ -115,12 +153,13 @@ class ChatPageVC: UIViewController {
         }
     }
     
+    // MARK: - Database Methods
     func retriveMessageFromDataBase() {
         guard let currentUserUID = Auth.auth().currentUser?.uid,
               let otherEmail = otherUserEmail else { return }
         
-        print("当前用户UID: \(currentUserUID)")
-        print("对方邮箱: \(otherEmail)")
+        print("Current User UID: \(currentUserUID)")
+        print("Other Email: \(otherEmail)")
         
         let messageDB = Database.database().reference().child("private_messages")
             .child(currentUserUID)
@@ -130,7 +169,7 @@ class ChatPageVC: UIViewController {
         messageDB.queryOrdered(byChild: "timestamp").observe(.value) { [weak self] snapshot in
             guard let self = self else { return }
             
-            print("获取到的消息数据: \(snapshot.value ?? "空")")
+            print("Message Fetched: \(snapshot.value ?? "Empty")")
             
             // 清空现有消息
             self.mesArray.removeAll()
@@ -158,14 +197,21 @@ class ChatPageVC: UIViewController {
             
             // 更新UI
             self.chatPageView.chatMessagesTableView.reloadData()
-            self.scrollToBottom()
+            // 使用 animated: false 来避免首次加载时的动画
+            self.scrollToBottom(animated: false)
         }
     }
     
-    private func scrollToBottom() {
-        if !mesArray.isEmpty {
-            let indexPath = IndexPath(row: mesArray.count - 1, section: 0)
-            chatPageView.chatMessagesTableView.scrollToRow(at: indexPath, at: .bottom, animated: true)
+    private func scrollToBottom(animated: Bool = true) {
+        DispatchQueue.main.async {
+            if !self.mesArray.isEmpty {
+                let indexPath = IndexPath(row: self.mesArray.count - 1, section: 0)
+                self.chatPageView.chatMessagesTableView.scrollToRow(
+                    at: indexPath,
+                    at: .bottom,
+                    animated: animated
+                )
+            }
         }
     }
 }
@@ -199,3 +245,4 @@ extension ChatPageVC: UITableViewDelegate, UITableViewDataSource {
         return 60
     }
 }
+
