@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCu3CCSTslpE_7Vh7wHMuIhqqFdPWp4Z9g</string>
+	<string>AIzaSyDrYIWmnvG802TIkEZY8hUKmbkZUlgogcQ</string>
 	<key>GCM_SENDER_ID</key>
-	<string>259708695857</string>
+	<string>468300157760</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.shiva.LetChatMessanger</string>
 	<key>PROJECT_ID</key>
-	<string>chatappios-87a7d</string>
+	<string>letchatmessenger-b50b8</string>
 	<key>STORAGE_BUCKET</key>
-	<string>chatappios-87a7d.appspot.com</string>
+	<string>letchatmessenger-b50b8.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,8 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:259708695857:ios:9da0c5ca88681c0f3fec10</string>
-	<key>DATABASE_URL</key>
-	<string>https://chatappios-87a7d-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+	<string>1:468300157760:ios:93d17a0efdb4b53bc9e0a5</string>
 </dict>
 </plist>

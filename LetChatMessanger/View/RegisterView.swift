@@ -4,7 +4,7 @@ class RegisterView: UIView {
     
     let nameTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Input Name"
+        textField.placeholder = "输入姓名"
         textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.autocapitalizationType = .none
@@ -14,7 +14,7 @@ class RegisterView: UIView {
     
     let emailTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Input Email"
+        textField.placeholder = "输入邮箱"
         textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.keyboardType = .emailAddress
@@ -25,7 +25,7 @@ class RegisterView: UIView {
     
     let passwordTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Input Password"
+        textField.placeholder = "输入密码"
         textField.isSecureTextEntry = true
         textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -36,7 +36,7 @@ class RegisterView: UIView {
     
     let confirmPasswordTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Confirm Password"
+        textField.placeholder = "确认密码"
         textField.isSecureTextEntry = true
         textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -46,20 +46,26 @@ class RegisterView: UIView {
     }()
     
     let createAccountButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Create Account", for: .normal)
+        let button = UIButton()
+        button.setTitle("创建账号", for: .normal)
         button.backgroundColor = .systemBlue
-        button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 5
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }()
+    
+    private let stackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 20
+        stackView.distribution = .fillEqually
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupView()
-        setupConstraints()
     }
     
     required init?(coder: NSCoder) {
@@ -68,39 +74,34 @@ class RegisterView: UIView {
     
     private func setupView() {
         backgroundColor = .white
-        addSubview(nameTextField)
-        addSubview(emailTextField)
-        addSubview(passwordTextField)
-        addSubview(confirmPasswordTextField)
-        addSubview(createAccountButton)
-    }
-    
-    private func setupConstraints() {
+        
+        // 添加堆栈视图
+        addSubview(stackView)
+        
+        // 将所有输入控件添加到堆栈视图
+        stackView.addArrangedSubview(nameTextField)
+        stackView.addArrangedSubview(emailTextField)
+        stackView.addArrangedSubview(passwordTextField)
+        stackView.addArrangedSubview(confirmPasswordTextField)
+        stackView.addArrangedSubview(createAccountButton)
+        
+        // 设置约束
         NSLayoutConstraint.activate([
-            nameTextField.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
-            nameTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            nameTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            // 堆栈视图约束
+            stackView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            
+            // 设置每个输入框的高度
             nameTextField.heightAnchor.constraint(equalToConstant: 44),
-            
-            emailTextField.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: 20),
-            emailTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            emailTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             emailTextField.heightAnchor.constraint(equalToConstant: 44),
-            
-            passwordTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
-            passwordTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            passwordTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             passwordTextField.heightAnchor.constraint(equalToConstant: 44),
-            
-            confirmPasswordTextField.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 20),
-            confirmPasswordTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            confirmPasswordTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 44),
-            
-            createAccountButton.topAnchor.constraint(equalTo: confirmPasswordTextField.bottomAnchor, constant: 30),
-            createAccountButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            createAccountButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             createAccountButton.heightAnchor.constraint(equalToConstant: 44)
         ])
+        
+        // 设置按钮样式
+        createAccountButton.setTitleColor(.white, for: .normal)
+        createAccountButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
     }
-}
+} 

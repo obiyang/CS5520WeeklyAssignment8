@@ -32,8 +32,8 @@ class LogInVC: UIViewController {
             if let error = error {
                 self?.showAlert(title: "Login Failed", message: error.localizedDescription)
             } else {
-                let chatVC = ChatPageVC()
-                self?.navigationController?.pushViewController(chatVC, animated: true)
+                let userListVC = UserListVC()
+                self?.navigationController?.pushViewController(userListVC, animated: true)
             }
         }
     }
