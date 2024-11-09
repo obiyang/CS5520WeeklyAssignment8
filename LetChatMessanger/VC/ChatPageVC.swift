@@ -25,12 +25,18 @@ class ChatPageVC: UIViewController {
         setupTableView()
         retriveMessageFromDataBase()
         setupMessageSending()
+        setupKeyboardHandling()
+        setupTapGesture()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Scroll to the bottom after the view layout is completed
         scrollToBottom(animated: false)
+    }
+    
+    deinit {
+        // 移除键盘通知观察者
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Setup Methods
@@ -55,6 +61,7 @@ class ChatPageVC: UIViewController {
     }
     
     private func setupMessageSending() {
+        chatPageView.messageTextField.delegate = self
         chatPageView.messageSendButton.addTarget(
             self,
             action: #selector(tappedOnMessageSendButton),
@@ -62,6 +69,36 @@ class ChatPageVC: UIViewController {
         )
     }
     
+    private func setupKeyboardHandling() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+    }
+    
+    private func setupTapGesture() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+    }
+    
+    // MARK: - Navigation Setup
+    private func navigationBarSetUp() {
+        navigationItem.title = otherUserName ?? otherUserEmail
+        let logOutButton = UIBarButtonItem(title: "Log Out", style: .plain, target: self, action: #selector(logoutButtonTapped))
+        navigationItem.rightBarButtonItem = logOutButton
+    }
+    
+    // MARK: - Data Fetching
     private func fetchOtherUserName() {
         guard let otherEmail = otherUserEmail else { return }
         
@@ -72,7 +109,6 @@ class ChatPageVC: UIViewController {
                    let userData = userSnapshot.value as? [String: Any],
                    let name = userData["name"] as? String {
                     self?.otherUserName = name
-                    // Update navigation bar title
                     self?.navigationItem.title = name
                     break
                 }
@@ -80,24 +116,12 @@ class ChatPageVC: UIViewController {
         }
     }
     
-    // MARK: - Navigation Setup
-    func navigationBarSetUp() {
-        navigationItem.title = otherUserName ?? otherUserEmail
-        let logOutButton = UIBarButtonItem(title: "Log Out", style: .plain, target: self, action: #selector(logoutButtonTapped))
-        navigationItem.rightBarButtonItem = logOutButton
+    // MARK: - Message Handling
+    @objc private func tappedOnMessageSendButton() {
+        sendMessage()
     }
     
-    // MARK: - Action Methods
-    @objc func logoutButtonTapped() {
-        do {
-            try Auth.auth().signOut()
-            navigationController?.popToRootViewController(animated: true)
-        } catch {
-            print("Failed to log out: \(error)")
-        }
-    }
-    
-    @objc func tappedOnMessageSendButton() {
+    private func sendMessage() {
         guard let messageText = chatPageView.messageTextField.text, !messageText.isEmpty,
               let currentUserEmail = Auth.auth().currentUser?.email else { return }
         
@@ -123,25 +147,19 @@ class ChatPageVC: UIViewController {
                    let _ = userData["email"] as? String {
                     let receiverUID = userSnapshot.key
                     
-                    // Generate a unique message ID
                     let messageId = Database.database().reference().child("messages").childByAutoId().key ?? ""
                     
-                    // Create multi-path updates
                     var multiPathUpdates: [String: Any] = [:]
                     
-                    // Store message for sender
                     let senderPath = "private_messages/\(Auth.auth().currentUser?.uid ?? "")/\(self.otherUserEmail?.replacingOccurrences(of: ".", with: "_") ?? "")/\(messageId)"
                     multiPathUpdates[senderPath] = messageDictionary
                     
-                    // Store message for receiver
                     let receiverPath = "private_messages/\(receiverUID)/\(currentUserEmail.replacingOccurrences(of: ".", with: "_"))/\(messageId)"
                     multiPathUpdates[receiverPath] = messageDictionary
                     
-                    // Perform multi-path update
                     Database.database().reference().updateChildValues(multiPathUpdates) { [weak self] error, _ in
                         if error == nil {
-                            self?.chatPageView.messageTextField.text = ""
-                            // Scroll to the bottom after sending
+                            self?.chatPageView.clearMessageField()
                             self?.scrollToBottom()
                         }
                         self?.chatPageView.messageTextField.isEnabled = true
@@ -158,23 +176,15 @@ class ChatPageVC: UIViewController {
         guard let currentUserUID = Auth.auth().currentUser?.uid,
               let otherEmail = otherUserEmail else { return }
         
-        print("Current User UID: \(currentUserUID)")
-        print("Other Email: \(otherEmail)")
-        
         let messageDB = Database.database().reference().child("private_messages")
             .child(currentUserUID)
             .child(otherEmail.replacingOccurrences(of: ".", with: "_"))
         
-        // Retrieve messages ordered by timestamp
         messageDB.queryOrdered(byChild: "timestamp").observe(.value) { [weak self] snapshot in
             guard let self = self else { return }
             
-            print("Message Fetched: \(snapshot.value ?? "Empty")")
-            
-            // Clear existing messages
             self.mesArray.removeAll()
             
-            // Iterate over all messages
             for child in snapshot.children {
                 if let snapshot = child as? DataSnapshot,
                    let messageData = snapshot.value as? [String: Any],
@@ -192,16 +202,13 @@ class ChatPageVC: UIViewController {
                 }
             }
             
-            // Sort messages by timestamp
             self.mesArray.sort { $0.timestamp < $1.timestamp }
-            
-            // Update UI
             self.chatPageView.chatMessagesTableView.reloadData()
-            // Use animated: false to avoid animation on initial load
             self.scrollToBottom(animated: false)
         }
     }
     
+    // MARK: - Helper Methods
     private func scrollToBottom(animated: Bool = true) {
         DispatchQueue.main.async {
             if !self.mesArray.isEmpty {
@@ -212,6 +219,43 @@ class ChatPageVC: UIViewController {
                     animated: animated
                 )
             }
+        }
+    }
+    
+    // MARK: - Action Methods
+    @objc private func logoutButtonTapped() {
+        do {
+            try Auth.auth().signOut()
+            navigationController?.popToRootViewController(animated: true)
+        } catch {
+            print("Failed to log out: \(error)")
+        }
+    }
+    
+    @objc private func handleTap() {
+        view.endEditing(true)
+    }
+    
+    @objc private func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            chatPageView.messageInputBottomConstraint?.constant = -keyboardSize.height + view.safeAreaInsets.bottom
+            
+            UIView.animate(withDuration: 0.3) {
+                self.view.layoutIfNeeded()
+            }
+            
+            // 确保当前消息可见
+            if !mesArray.isEmpty {
+                scrollToBottom()
+            }
+        }
+    }
+    
+    @objc private func keyboardWillHide(notification: NSNotification) {
+        chatPageView.messageInputBottomConstraint?.constant = -10
+        
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
         }
     }
 }
@@ -236,12 +280,14 @@ extension ChatPageVC: UITableViewDelegate, UITableViewDataSource {
         
         return cell
     }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 60
+}
+
+// MARK: - UITextFieldDelegate
+extension ChatPageVC: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if !textField.text!.isEmpty {
+            sendMessage()
+        }
+        return true
     }
 }
