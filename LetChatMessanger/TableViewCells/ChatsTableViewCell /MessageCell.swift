@@ -95,7 +95,7 @@ class MessageCell: UITableViewCell {
         
         // Check if the message is from today
         if Calendar.current.isDateInToday(date) {
-            formatter.dateFormat = "h:mm a"
+            formatter.dateFormat = "'Today' h:mm a"
         }
         // Check if the message is from yesterday
         else if Calendar.current.isDateInYesterday(date) {
