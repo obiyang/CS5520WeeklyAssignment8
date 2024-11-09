@@ -29,7 +29,7 @@ class ChatPageVC: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // 在视图布局完成后滚动到底部
+        // Scroll to the bottom after the view layout is completed
         scrollToBottom(animated: false)
     }
     
@@ -72,7 +72,7 @@ class ChatPageVC: UIViewController {
                    let userData = userSnapshot.value as? [String: Any],
                    let name = userData["name"] as? String {
                     self?.otherUserName = name
-                    // 更新导航栏标题
+                    // Update navigation bar title
                     self?.navigationItem.title = name
                     break
                 }
@@ -112,7 +112,7 @@ class ChatPageVC: UIViewController {
             "timestamp": timestamp
         ]
         
-        // 查找接收者的 UID
+        // Find the receiver's UID
         let usersRef = Database.database().reference().child("users")
         usersRef.queryOrdered(byChild: "email").queryEqual(toValue: otherUserEmail).observeSingleEvent(of: .value) { [weak self] snapshot in
             guard let self = self else { return }
@@ -123,25 +123,25 @@ class ChatPageVC: UIViewController {
                    let _ = userData["email"] as? String {
                     let receiverUID = userSnapshot.key
                     
-                    // 生成一个唯一的消息ID
+                    // Generate a unique message ID
                     let messageId = Database.database().reference().child("messages").childByAutoId().key ?? ""
                     
-                    // 创建多路径更新
+                    // Create multi-path updates
                     var multiPathUpdates: [String: Any] = [:]
                     
-                    // 为发送者存储消息
+                    // Store message for sender
                     let senderPath = "private_messages/\(Auth.auth().currentUser?.uid ?? "")/\(self.otherUserEmail?.replacingOccurrences(of: ".", with: "_") ?? "")/\(messageId)"
                     multiPathUpdates[senderPath] = messageDictionary
                     
-                    // 为接收者存储消息
+                    // Store message for receiver
                     let receiverPath = "private_messages/\(receiverUID)/\(currentUserEmail.replacingOccurrences(of: ".", with: "_"))/\(messageId)"
                     multiPathUpdates[receiverPath] = messageDictionary
                     
-                    // 执行多路径更新
+                    // Perform multi-path update
                     Database.database().reference().updateChildValues(multiPathUpdates) { [weak self] error, _ in
                         if error == nil {
                             self?.chatPageView.messageTextField.text = ""
-                            // 发送成功后滚动到底部
+                            // Scroll to the bottom after sending
                             self?.scrollToBottom()
                         }
                         self?.chatPageView.messageTextField.isEnabled = true
@@ -165,16 +165,16 @@ class ChatPageVC: UIViewController {
             .child(currentUserUID)
             .child(otherEmail.replacingOccurrences(of: ".", with: "_"))
         
-        // 按时间戳排序获取消息
+        // Retrieve messages ordered by timestamp
         messageDB.queryOrdered(byChild: "timestamp").observe(.value) { [weak self] snapshot in
             guard let self = self else { return }
             
             print("Message Fetched: \(snapshot.value ?? "Empty")")
             
-            // 清空现有消息
+            // Clear existing messages
             self.mesArray.removeAll()
             
-            // 遍历所有消息
+            // Iterate over all messages
             for child in snapshot.children {
                 if let snapshot = child as? DataSnapshot,
                    let messageData = snapshot.value as? [String: Any],
@@ -192,12 +192,12 @@ class ChatPageVC: UIViewController {
                 }
             }
             
-            // 按时间戳排序
+            // Sort messages by timestamp
             self.mesArray.sort { $0.timestamp < $1.timestamp }
             
-            // 更新UI
+            // Update UI
             self.chatPageView.chatMessagesTableView.reloadData()
-            // 使用 animated: false 来避免首次加载时的动画
+            // Use animated: false to avoid animation on initial load
             self.scrollToBottom(animated: false)
         }
     }
@@ -245,4 +245,3 @@ extension ChatPageVC: UITableViewDelegate, UITableViewDataSource {
         return 60
     }
 }
-

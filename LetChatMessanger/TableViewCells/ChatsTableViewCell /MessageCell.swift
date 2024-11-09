@@ -49,37 +49,37 @@ class MessageCell: UITableViewCell {
         bubbleView.addSubview(messageLabel)
         contentView.addSubview(timeLabel)
         
-        // 清除背景色
+        // Clear background color
         backgroundColor = .clear
         contentView.backgroundColor = .clear
         selectionStyle = .none
     }
     
     private func setupInitialConstraints() {
-        // 创建但不激活约束
+        // Create but do not activate constraints
         bubbleLeadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16)
         bubbleTrailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
         
         timeLabelLeadingConstraint = timeLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor)
         timeLabelTrailingConstraint = timeLabel.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor)
         
-        // 设置固定约束
+        // Set fixed constraints
         NSLayoutConstraint.activate([
-            // 气泡视图的垂直约束
+            // Vertical constraints for bubble view
             bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             
-            // 消息标签的约束
+            // Constraints for message label
             messageLabel.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 8),
             messageLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 12),
             messageLabel.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -12),
             messageLabel.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -8),
             
-            // 时间标签的约束
+            // Constraints for time label
             timeLabel.topAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: 4),
             timeLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             timeLabel.heightAnchor.constraint(equalToConstant: 16),
             
-            // 气泡最大宽度约束
+            // Max width constraint for bubble view
             bubbleView.widthAnchor.constraint(lessThanOrEqualToConstant: UIScreen.main.bounds.width * 0.75)
         ])
     }
@@ -88,38 +88,38 @@ class MessageCell: UITableViewCell {
     func configure(with message: MessageStruct, isCurrentUser: Bool) {
         messageLabel.text = message.messageBody
         
-        // 格式化时间戳
+        // Format timestamp
         let date = Date(timeIntervalSince1970: message.timestamp / 1000)
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US") // 使用中文日期格式
+        formatter.locale = Locale(identifier: "en_US") // Use US date format
         
-        // 判断是否是今天的消息
+        // Check if the message is from today
         if Calendar.current.isDateInToday(date) {
             formatter.dateFormat = "h:mm a"
         }
-        // 判断是否是昨天的消息
+        // Check if the message is from yesterday
         else if Calendar.current.isDateInYesterday(date) {
             formatter.dateFormat = "Yesterday h:mm a"
         }
-        // 判断是否是今年的消息
+        // Check if the message is from this year
         else if Calendar.current.component(.year, from: date) == Calendar.current.component(.year, from: Date()) {
             formatter.dateFormat = "MMM d, h:mm a"
         }
-        // 其他年份的消息
+        // Message from other years
         else {
             formatter.dateFormat = "MMM d, yyyy h:mm a"
         }
         
         timeLabel.text = formatter.string(from: date)
         
-        // 停用所有之前的约束
+        // Deactivate all previous constraints
         bubbleLeadingConstraint?.isActive = false
         bubbleTrailingConstraint?.isActive = false
         timeLabelLeadingConstraint?.isActive = false
         timeLabelTrailingConstraint?.isActive = false
         
         if isCurrentUser {
-            // 当前用户的消息（靠右）
+            // Message from current user (align right)
             bubbleView.backgroundColor = UIColor.systemBlue
             messageLabel.textColor = .white
             messageLabel.textAlignment = .left
@@ -128,7 +128,7 @@ class MessageCell: UITableViewCell {
             timeLabel.textAlignment = .right
             bubbleView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMinYCorner]
         } else {
-            // 其他用户的消息（靠左）
+            // Message from other users (align left)
             bubbleView.backgroundColor = UIColor.systemGray5
             messageLabel.textColor = .black
             messageLabel.textAlignment = .left
@@ -138,7 +138,7 @@ class MessageCell: UITableViewCell {
             bubbleView.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner, .layerMinXMinYCorner]
         }
         
-        // 强制立即更新布局
+        // Force immediate layout update
         setNeedsLayout()
         layoutIfNeeded()
     }
@@ -147,13 +147,13 @@ class MessageCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         
-        // 重置视图状态
+        // Reset view state
         bubbleView.backgroundColor = nil
         messageLabel.text = nil
         messageLabel.textAlignment = .left
         timeLabel.text = nil
         
-        // 停用所有约束
+        // Deactivate all constraints
         bubbleLeadingConstraint?.isActive = false
         bubbleTrailingConstraint?.isActive = false
         timeLabelLeadingConstraint?.isActive = false

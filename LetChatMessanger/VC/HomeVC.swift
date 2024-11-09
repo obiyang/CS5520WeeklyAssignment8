@@ -13,7 +13,7 @@ class HomeVC: UIViewController {
         super.viewDidLoad()
         navigationItem.title = "Welcome"
         
-        // 为按钮添加目标动作
+        // Add target actions for buttons
         homeView.loginButton.addTarget(self, action: #selector(tappedOnButton(_:)), for: .touchUpInside)
         homeView.registerButton.addTarget(self, action: #selector(tappedOnButton(_:)), for: .touchUpInside)
     }

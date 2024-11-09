@@ -39,6 +39,8 @@ class UserListVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     private func fetchUsers() {
         print("Start fetching users")
+        guard let currentUserEmail = Auth.auth().currentUser?.email else { return }
+        
         let usersRef = Database.database().reference().child("users")
         usersRef.observe(.value) { [weak self] snapshot in
             print("Get data: \(snapshot.value ?? "Empty")")
@@ -49,9 +51,11 @@ class UserListVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
                    let userData = snapshot.value as? [String: Any],
                    let email = userData["email"] as? String,
                    let name = userData["name"] as? String {
-                    print("Parsed user: \(email)")
-                    let user = User(name: name, email: email, uid: snapshot.key)
-                    self?.users.append(user)
+                    if email != currentUserEmail {
+                        print("Parsed user: \(email)")
+                        let user = User(name: name, email: email, uid: snapshot.key)
+                        self?.users.append(user)
+                    }
                 }
             }
             
@@ -77,7 +81,7 @@ class UserListVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath)
         let user = users[indexPath.row]
-        cell.textLabel?.text = "\(user.name) (\(user.email))"
+        cell.textLabel?.text = "\(user.name)"
         return cell
     }
     

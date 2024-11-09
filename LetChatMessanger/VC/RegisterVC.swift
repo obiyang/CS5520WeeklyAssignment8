@@ -48,14 +48,14 @@ class RegisterVC: UIViewController {
             return
         }
         
-        // 验证密码匹配
+        // Verify password match
         guard pass == confirmPass else {
             showAlert(title: "Wrong Password", message: "The two passwords you entered do not match")
             SVProgressHUD.dismiss()
             return
         }
         
-        // 验证密码长度
+        // Verify password length
         guard pass.count >= 6 else {
             showAlert(title: "Password Error", message: "The password must be at least 6 characters long")
             SVProgressHUD.dismiss()
@@ -71,7 +71,7 @@ class RegisterVC: UIViewController {
             if let error = error {
                 self?.showAlert(title: "Failed to create user", message: error.localizedDescription)
             } else if let uid = result?.user.uid {
-                // 保存用户信息到数据库
+                // Save user info to database
                 let userRef = Database.database().reference().child("users").child(uid)
                 let userData = [
                     "name": name,
@@ -82,7 +82,7 @@ class RegisterVC: UIViewController {
                     if let error = error {
                         print("Failed to save user data: \(error.localizedDescription)")
                     } else {
-                        // 跳转到用户列表页面
+                        // Navigate to user list page
                         let userListVC = UserListVC()
                         self?.navigationController?.pushViewController(userListVC, animated: true)
                     }
